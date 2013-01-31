@@ -17,10 +17,10 @@ class ColorPalette {
   /**
    * Helper method that caches files locally to the system temp dir
    */
-	static private function CacheFromUrl($imageUrl,$useCache=true){
+  static private function CacheFromUrl($imageUrl,$useCache=true){
     $localFile = sys_get_temp_dir()."/".md5($imageUrl);
     if(file_exists($localFile) && $useCache){
-    	return $localFile;
+      return $localFile;
     }
     $ch = curl_init();
     $worked = true;
@@ -36,24 +36,24 @@ class ColorPalette {
     }
     curl_close($ch);
     return $worked ? $localFile : null;
-	}
+  }
 
   /**
    * Generate a color palette from a single online image
    */
-	static public function GenerateFromUrl($imageUrl,$useCache=true) {
-		$localFile = ColorPalette::CacheFromUrl($imageUrl,$useCache);
-		if($localFile!=null) {
-	    return ColorPalette::GenerateFromLocalImage($localFile);
-	  } 
-	  return array();	// fails silently
-	}
+  static public function GenerateFromUrl($imageUrl,$useCache=true) {
+    $localFile = ColorPalette::CacheFromUrl($imageUrl,$useCache);
+    if($localFile!=null) {
+      return ColorPalette::GenerateFromLocalImage($localFile);
+    } 
+    return array();  // fails silently
+  }
 
   /**
    * Generate a single color palette from a list of online image urls
    */
-	static public function GenerateFromUrls($imageUrlList, $useCache=true){
-   	$colorHexToFreq = array();
+  static public function GenerateFromUrls($imageUrlList, $useCache=true){
+     $colorHexToFreq = array();
     foreach($imageUrlList as $imageUrl){
       $colors = ColorPalette::GenerateFromUrl($imageUrl,$useCache);
       //$colors = array_slice($colors,0,5,true);
@@ -66,67 +66,67 @@ class ColorPalette {
     }
     arsort($colorHexToFreq);
     return $colorHexToFreq;
-	}
+  }
 
-	/**
-	 * Returns the colors of the image in an array, ordered in descending order, where
-	 * the keys are the colors, and the values are the count of the color.
-	 * @param $filePath 	the path to the local image file
-	 * @return an array keyed by hex color value, mapping to the frequency of use in the images
-	 */
-	static public function GenerateFromLocalImage($filePath) {
-		if( !file_exists($filePath)) {
-			throw new InvalidArgumentException("File not found (".$filePath.")");
-		}
+  /**
+   * Returns the colors of the image in an array, ordered in descending order, where
+   * the keys are the colors, and the values are the count of the color.
+   * @param $filePath   the path to the local image file
+   * @return an array keyed by hex color value, mapping to the frequency of use in the images
+   */
+  static public function GenerateFromLocalImage($filePath) {
+    if( !file_exists($filePath)) {
+      throw new InvalidArgumentException("File not found (".$filePath.")");
+    }
 
-		// resize the image for a reasonable amount of colors
-		$PREVIEW_WIDTH    = 150;
-		$PREVIEW_HEIGHT   = 150;
-		$size = GetImageSize($filePath);
-		$scale=1;
-		if ($size[0]>0){
-			$scale = min($PREVIEW_WIDTH/$size[0], $PREVIEW_HEIGHT/$size[1]);
-		}
-		if ($scale < 1) {
-			$width = floor($scale*$size[0]);
-			$height = floor($scale*$size[1]);
-		} else {
-			$width = $size[0];
-			$height = $size[1];
-		}
-		$image_resized = imagecreatetruecolor($width, $height);
-		if ($size[2]==IMAGETYPE_GIF) {
-			$image_orig=imagecreatefromgif($filePath);
-		}
-		if ($size[2]==IMAGETYPE_JPEG) {
-			$image_orig=imagecreatefromjpeg($filePath);
-		}
-		if ($size[2]==IMAGETYPE_PNG) {
-			$image_orig=imagecreatefrompng($filePath);
-		}
-		//WE NEED NEAREST NEIGHBOR RESIZING, BECAUSE IT DOESN'T ALTER THE COLORS
-		imagecopyresampled($image_resized, $image_orig, 0, 0, 0, 0, $width, $height, $size[0], $size[1]);
-		$im = $image_resized;
-		$imgWidth = imagesx($im);
-		$imgHeight = imagesy($im);
+    // resize the image for a reasonable amount of colors
+    $PREVIEW_WIDTH    = 150;
+    $PREVIEW_HEIGHT   = 150;
+    $size = GetImageSize($filePath);
+    $scale=1;
+    if ($size[0]>0){
+      $scale = min($PREVIEW_WIDTH/$size[0], $PREVIEW_HEIGHT/$size[1]);
+    }
+    if ($scale < 1) {
+      $width = floor($scale*$size[0]);
+      $height = floor($scale*$size[1]);
+    } else {
+      $width = $size[0];
+      $height = $size[1];
+    }
+    $image_resized = imagecreatetruecolor($width, $height);
+    if ($size[2]==IMAGETYPE_GIF) {
+      $image_orig=imagecreatefromgif($filePath);
+    }
+    if ($size[2]==IMAGETYPE_JPEG) {
+      $image_orig=imagecreatefromjpeg($filePath);
+    }
+    if ($size[2]==IMAGETYPE_PNG) {
+      $image_orig=imagecreatefrompng($filePath);
+    }
+    //WE NEED NEAREST NEIGHBOR RESIZING, BECAUSE IT DOESN'T ALTER THE COLORS
+    imagecopyresampled($image_resized, $image_orig, 0, 0, 0, 0, $width, $height, $size[0], $size[1]);
+    $im = $image_resized;
+    $imgWidth = imagesx($im);
+    $imgHeight = imagesy($im);
 
-		// walk the image counting colors
-		for ($y=0; $y < $imgHeight; $y++) {
-			for ($x=0; $x < $imgWidth; $x++) {
-				$index = imagecolorat($im,$x,$y);
-				$Colors = imagecolorsforindex($im,$index);
-				$div = ColorPalette::COLOR_ROUNDING_COEFF;
-				$Colors['red'] = round(round(($Colors['red'] / $div)) * $div);
-				$Colors['green'] = round(round(($Colors['green'] / $div)) * $div);
-				$Colors['blue'] = round(round(($Colors['blue'] / $div)) * $div);
-				$hexarray[]=substr("0".dechex($Colors['red']),-2).substr("0".dechex($Colors['green']),-2).substr("0".dechex($Colors['blue']),-2);
-			}
-		}
-		$hexarray=array_count_values($hexarray);
-		natsort($hexarray);
-		$hexarray=array_reverse($hexarray,true);
-		return $hexarray;
-	}
+    // walk the image counting colors
+    for ($y=0; $y < $imgHeight; $y++) {
+      for ($x=0; $x < $imgWidth; $x++) {
+        $index = imagecolorat($im,$x,$y);
+        $Colors = imagecolorsforindex($im,$index);
+        $div = ColorPalette::COLOR_ROUNDING_COEFF;
+        $Colors['red'] = round(round(($Colors['red'] / $div)) * $div);
+        $Colors['green'] = round(round(($Colors['green'] / $div)) * $div);
+        $Colors['blue'] = round(round(($Colors['blue'] / $div)) * $div);
+        $hexarray[]=substr("0".dechex($Colors['red']),-2).substr("0".dechex($Colors['green']),-2).substr("0".dechex($Colors['blue']),-2);
+      }
+    }
+    $hexarray=array_count_values($hexarray);
+    natsort($hexarray);
+    $hexarray=array_reverse($hexarray,true);
+    return $hexarray;
+  }
 
 }
 ?>
