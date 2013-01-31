@@ -17,6 +17,7 @@ require_once("ColorPalette.php");
 $localPalette = ColorPalette::GenerateFromLocalImage("MuppetsOfSesameStreet.jpg");
 ?>
 <img src="MuppetsOfSesameStreet.jpg" width="300px">
+<br />
 <?php
 printPalette($localPalette);
 ?>
@@ -26,6 +27,7 @@ printPalette($localPalette);
 $url = "http://upload.wikimedia.org/wikipedia/en/d/dd/Muppets_take_manhattan.jpg";
 $remotePalette = ColorPalette::GenerateFromUrl($url);
 ?>
+<br />
 <img src="<?php print $url?>" height="150px">
 <?php
 printPalette($remotePalette);

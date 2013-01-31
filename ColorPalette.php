@@ -56,12 +56,12 @@ class ColorPalette {
      $colorHexToFreq = array();
     foreach($imageUrlList as $imageUrl){
       $colors = ColorPalette::GenerateFromUrl($imageUrl,$useCache);
-      //$colors = array_slice($colors,0,5,true);
+      //$colors = array_slice($colors,0,10,true);  // not sure if we should trim to the top 10 and then merge?
       foreach($colors as $color=>$freq){
         if( !array_key_exists($color,$colorHexToFreq) ){
           $colorHexToFreq[$color] = 0;
         }
-        $colorHexToFreq[$color] += 1;
+        $colorHexToFreq[$color] += $freq;
       }
     }
     arsort($colorHexToFreq);
